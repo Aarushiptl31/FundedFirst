@@ -122,3 +122,7 @@ FundedFirst/
 - `firebase_credentials.json`, `.env`, local databases, logs, and Python cache files are ignored by git.
 - The dashboard expects `templates/dashboard.html` to exist.
 - Keep Firebase rules restrictive before deploying beyond local development.
+
+## create a .gitignore
+
+create git ignore file and add all the confidential details in it.
