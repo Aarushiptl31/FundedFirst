@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FundedFirst — AI-Powered Startup Job Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg-0:#09090B;--bg-1:#111113;--bg-2:#1A1A1E;--bg-3:#232328;
+--bg-hover:#2C2C32;--bg-active:#35353C;
+--border-1:rgba(255,255,255,.05);--border-2:rgba(255,255,255,.08);--border-3:rgba(255,255,255,.12);
+--text-0:#FAFAFA;--text-1:#D4D4D8;--text-2:#A1A1AA;--text-3:#71717A;
+--amber:#F59E0B;--amber-dim:rgba(245,158,11,.12);--amber-hover:#D97706;
+--green:#10B981;--green-dim:rgba(16,185,129,.12);
+--red:#EF4444;--red-dim:rgba(239,68,68,.12);
+--blue:#3B82F6;--blue-dim:rgba(59,130,246,.12);
+--orange:#F97316;--orange-dim:rgba(249,115,22,.12);
+--purple:#8B5CF6;--purple-dim:rgba(139,92,246,.12);
+--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:20px;
+--shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 12px rgba(0,0,0,.4);
+--shadow-lg:0 8px 32px rgba(0,0,0,.5);--shadow-glow:0 0 40px rgba(245,158,11,.08);
+--font-display:'Outfit',sans-serif;--font-body:'Inter',sans-serif;
+--sidebar-w:260px;--sidebar-collapsed:68px;--topbar-h:64px;
+--transition:200ms cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--bg-0);color:var(--text-1);line-height:1.6;overflow-x:hidden;min-height:100vh}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg-active);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-3)}
+::selection{background:var(--amber);color:var(--bg-0)}
+a{color:var(--amber);text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;color:var(--text-0);background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:10px 14px;outline:none;transition:border var(--transition)}
+input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+img{max-width:100%;display:block}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg-0)}
+#login-screen .mesh-bg{position:absolute;inset:0;overflow:hidden}
+#login-screen .mesh-bg .blob{position:absolute;border-radius:50%;filter:blur(100px);opacity:.3;animation:float 20s infinite ease-in-out}
+#login-screen .mesh-bg .blob:nth-child(1){width:500px;height:500px;background:var(--amber);top:-10%;left:-10%;animation-delay:0s}
+#login-screen .mesh-bg .blob:nth-child(2){width:400px;height:400px;background:var(--green);bottom:-10%;right:-10%;animation-delay:-7s}
+#login-screen .mesh-bg .blob:nth-child(3){width:350px;height:350px;background:var(--purple);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-14s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(50px,-30px) scale(1.1)}50%{transform:translate(-20px,40px) scale(.95)}75%{transform:translate(30px,20px) scale(1.05)}}
+.login-card{position:relative;z-index:1;width:420px;max-width:90vw;background:rgba(17,17,19,.75);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid var(--border-2);border-radius:var(--radius-xl);padding:48px 40px;text-align:center}
+.login-card .logo{width:56px;height:56px;margin:0 auto 24px;background:var(--amber);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:24px;color:var(--bg-0);letter-spacing:-1px}
+.login-card h1{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text-0);margin-bottom:8px}
+.login-card p{color:var(--text-2);font-size:14px;margin-bottom:32px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 24px;background:var(--text-0);color:var(--bg-0);border-radius:var(--radius-md);font-weight:600;font-size:15px;transition:all var(--transition);box-shadow:var(--shadow-md)}
+.google-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.google-btn svg{width:20px;height:20px}
+.login-card .terms{margin-top:24px;font-size:12px;color:var(--text-3);line-height:1.5}
+.login-card .terms a{color:var(--text-2);text-decoration:underline}
+.login-error{margin-top:16px;padding:10px 16px;background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);color:var(--red);font-size:13px;display:none}
+
+/* ── APP SHELL ── */
+#app-shell{display:none;height:100vh;overflow:hidden}
+#app-shell.active{display:flex}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);height:100vh;background:var(--bg-1);border-right:1px solid var(--border-1);display:flex;flex-direction:column;transition:width var(--transition);position:fixed;left:0;top:0;z-index:100;overflow:hidden}
+.sidebar.collapsed{width:var(--sidebar-collapsed)}
+.sidebar-header{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid var(--border-1);min-height:var(--topbar-h)}
+.sidebar-header .logo{width:36px;height:36px;min-width:36px;background:var(--amber);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:16px;color:var(--bg-0);letter-spacing:-.5px}
+.sidebar-header .brand{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-0);white-space:nowrap;overflow:hidden;transition:opacity var(--transition)}
+.sidebar.collapsed .brand{opacity:0}
+.sidebar-nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);color:var(--text-2);font-size:14px;font-weight:500;transition:all var(--transition);white-space:nowrap;position:relative}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-0)}
+.nav-item.active{background:var(--amber-dim);color:var(--amber)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--amber);border-radius:0 3px 3px 0}
+.nav-item svg{width:20px;height:20px;min-width:20px;opacity:.7}
+.nav-item.active svg{opacity:1}
+.sidebar.collapsed .nav-item span{display:none}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border-1)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:background var(--transition)}
+.sidebar-user:hover{background:var(--bg-hover)}
+.sidebar-user .avatar{width:32px;height:32px;min-width:32px;border-radius:50%;background:var(--bg-active);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-0)}
+.sidebar-user .avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-user .user-info{overflow:hidden;white-space:nowrap}
+.sidebar-user .user-name{font-size:13px;font-weight:600;color:var(--text-0)}
+.sidebar-user .user-email{font-size:11px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis}
+.sidebar.collapsed .user-info{display:none}
+
+/* ── MAIN ── */
+.main-content{flex:1;margin-left:var(--sidebar-w);height:100vh;overflow-y:auto;transition:margin-left var(--transition);background:var(--bg-0)}
+.sidebar.collapsed~.main-content{margin-left:var(--sidebar-collapsed)}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:50;height:var(--topbar-h);display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(9,9,11,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border-1)}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-left h2{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text-0)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);color:var(--text-2);transition:all var(--transition)}
+.topbar-btn:hover{background:var(--bg-hover);color:var(--text-0)}
+
+/* ── PAGE CONTENT ── */
+.page{display:none;padding:32px;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STAT CARDS (Bento) ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.stats-grid{grid-template-columns:1fr}}
+.stat-card{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius-lg);padding:24px;position:relative;overflow:hidden;transition:all var(--transition)}
+.stat-card:hover{border-color:var(--border-3);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-card .stat-icon{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.stat-card .stat-icon svg{width:20px;height:20px}
+.stat-card .stat-value{font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--text-0);line-height:1}
+.stat-card .stat-label{font-size:13px;color:var(--text-2);margin-top:4px}
+.stat-card .stat-trend{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;margin-top:8px;padding:2px 8px;border-radius:20px}
+.stat-card .stat-trend.up{color:var(--green);background:var(--green-dim)}
+.stat-card .stat-trend.neutral{color:var(--text-3);background:var(--bg-hover)}
+.stat-card::after{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;border-radius:50%;opacity:.03;pointer-events:none}
+.stat-card:nth-child(1)::after{background:var(--amber)}
+.stat-card:nth-child(2)::after{background:var(--green)}
+.stat-card:nth-child(3)::after{background:var(--blue)}
+.stat-card:nth-child(4)::after{background:var(--purple)}
+
+/* ── SECTION HEADERS ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-header h3{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text-0)}
+
+/* ── FILTER CHIPS ── */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;background:var(--bg-3);color:var(--text-2);border:1px solid var(--border-1);transition:all var(--transition);cursor:pointer}
+.chip:hover{border-color:var(--border-3);color:var(--text-0)}
+.chip.active{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,158,11,.3)}
+
+/* ── STARTUP CARDS ── */
+.startups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+@media(max-width:480px){.startups-grid{grid-template-columns:1fr}}
+.startup-card{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius-lg);padding:24px;transition:all var(--transition);position:relative;overflow:hidden}
+.startup-card:hover{border-color:var(--border-3);transform:translateY(-3px);box-shadow:var(--shadow-lg),var(--shadow-glow)}
+.startup-card .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.startup-card .card-info h4{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text-0);margin-bottom:4px}
+.startup-card .card-info .meta{display:flex;gap:8px;flex-wrap:wrap}
+.startup-card .card-info .meta span{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px}
+.meta-amount{background:var(--amber-dim);color:var(--amber)}
+.meta-round{background:var(--bg-hover);color:var(--text-2)}
+.meta-sector{background:var(--purple-dim);color:var(--purple)}
+.score-ring{position:relative;width:52px;height:52px;min-width:52px}
+.score-ring svg{width:52px;height:52px;transform:rotate(-90deg)}
+.score-ring .bg{fill:none;stroke:var(--bg-hover);stroke-width:4}
+.score-ring .fg{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s ease}
+.score-ring .value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--text-0)}
+.confidence-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:12px}
+.confidence-badge .dot{width:6px;height:6px;border-radius:50%}
+.badge-high{background:var(--green-dim);color:var(--green)}.badge-high .dot{background:var(--green)}
+.badge-medium{background:var(--amber-dim);color:var(--amber)}.badge-medium .dot{background:var(--amber)}
+.badge-low{background:var(--red-dim);color:var(--red)}.badge-low .dot{background:var(--red)}
+.startup-card .summary{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.startup-card .role-match{font-size:12px;color:var(--text-3);margin-bottom:16px}
+.startup-card .role-match strong{color:var(--text-1)}
+.card-actions{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;transition:all var(--transition)}
+.btn-primary{background:var(--amber);color:var(--bg-0)}
+.btn-primary:hover{background:var(--amber-hover);transform:translateY(-1px)}
+.btn-outline{border:1px solid var(--border-2);color:var(--text-1)}
+.btn-outline:hover{border-color:var(--border-3);background:var(--bg-hover)}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn svg{width:16px;height:16px}
+
+/* ── CHART CONTAINER ── */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+.chart-card{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius-lg);padding:24px}
+.chart-card h4{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--text-0);margin-bottom:20px}
+.chart-card canvas{max-height:260px}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px;animation:modalBgIn .2s ease}
+.modal-overlay.active{display:flex}
+@keyframes modalBgIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-xl);width:640px;max-width:100%;max-height:85vh;overflow-y:auto;animation:modalIn .3s cubic-bezier(.2,0,.2,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:24px 24px 0}
+.modal-header h3{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text-0)}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);color:var(--text-3);transition:all var(--transition)}
+.modal-close:hover{background:var(--bg-hover);color:var(--text-0)}
+.modal-body{padding:24px}
+.email-preview{background:var(--bg-0);border:1px solid var(--border-1);border-radius:var(--radius-md);padding:24px;font-size:13px;line-height:1.8;color:var(--text-1);white-space:pre-wrap;max-height:400px;overflow-y:auto}
+.modal-footer{padding:0 24px 24px;display:flex;gap:10px;justify-content:flex-end}
+
+/* ── SETTINGS ── */
+.settings-section{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px}
+.settings-section h4{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--text-0);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-1)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:500;color:var(--text-2)}
+.form-group.full{grid-column:1/-1}
+
+/* ── HISTORY KANBAN ── */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:768px){.kanban{grid-template-columns:1fr}}
+.kanban-col{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius-lg);padding:16px}
+.kanban-col h4{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.kanban-col h4 .count{background:var(--bg-hover);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--text-3)}
+.kanban-card{background:var(--bg-3);border:1px solid var(--border-1);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;font-size:13px}
+.kanban-card .kc-name{font-weight:600;color:var(--text-0);margin-bottom:4px}
+.kanban-card .kc-date{font-size:11px;color:var(--text-3)}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-3)}
+.empty-state svg{width:64px;height:64px;margin:0 auto 16px;opacity:.3}
+.empty-state p{font-size:14px;margin-bottom:4px}
+.empty-state small{font-size:12px;color:var(--text-3)}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{padding:14px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:500;color:var(--text-0);animation:toastIn .3s ease;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px}
+.toast.success{background:#065F46;border:1px solid rgba(16,185,129,.3)}
+.toast.error{background:#7F1D1D;border:1px solid rgba(239,68,68,.3)}
+.toast.info{background:#1E3A5F;border:1px solid rgba(59,130,246,.3)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── LOADING ── */
+.loading-overlay{position:fixed;inset:0;z-index:250;background:rgba(9,9,11,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+.loading-overlay.active{display:flex}
+.spinner{width:40px;height:40px;border:3px solid var(--bg-hover);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SKELETON ── */
+.skeleton{background:linear-gradient(90deg,var(--bg-3) 25%,var(--bg-hover) 50%,var(--bg-3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius-sm)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="login-screen">
+  <div class="mesh-bg"><div class="blob"></div><div class="blob"></div><div class="blob"></div></div>
+  <div class="login-card">
+    <div class="logo">FF</div>
+    <h1>Welcome to FundedFirst</h1>
+    <p>AI-powered startup job discovery. Sign in to get started.</p>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-error" id="login-error"></div>
+    <div class="terms">By signing in, you agree to our Terms of Service and Privacy Policy.</div>
+  </div>
+</div>
+
+<!-- ═══ APP SHELL ═══ -->
+<div id="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">FF</div>
+      <span class="brand">FundedFirst</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-page="startups" onclick="switchPage('startups')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        <span>Startups</span>
+      </button>
+      <button class="nav-item" data-page="history" onclick="switchPage('history')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>History</span>
+      </button>
+      <button class="nav-item" data-page="settings" onclick="switchPage('settings')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="switchPage('settings')">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">Loading...</div>
+          <div class="user-email" id="sidebar-email"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="topbar-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h2 id="page-title">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" onclick="runPipeline()" title="Run pipeline">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="topbar-btn" onclick="signOut()" title="Sign out">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:var(--amber-dim);color:var(--amber)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></div><div class="stat-value" id="stat-tracked">0</div><div class="stat-label">Startups Tracked</div><div class="stat-trend up" id="stat-tracked-trend">↗ Live</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--green-dim);color:var(--green)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="stat-value" id="stat-highmatch">0</div><div class="stat-label">High Match (75+)</div><div class="stat-trend neutral" id="stat-highmatch-trend">—</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--blue-dim);color:var(--blue)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div class="stat-value" id="stat-applied">0</div><div class="stat-label">Applications Sent</div><div class="stat-trend neutral" id="stat-applied-trend">—</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><div class="stat-value" id="stat-avgscore">0</div><div class="stat-label">Average Score</div><div class="stat-trend neutral" id="stat-avgscore-trend">—</div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card"><h4>Sector Distribution</h4><canvas id="sector-chart"></canvas></div>
+        <div class="chart-card"><h4>Score Distribution</h4><canvas id="score-chart"></canvas></div>
+      </div>
+      <div class="section-header"><h3>Top Matches</h3><button class="btn btn-outline btn-sm" onclick="switchPage('startups')">View All →</button></div>
+      <div class="startups-grid" id="top-startups"></div>
+    </div>
+
+    <!-- STARTUPS PAGE -->
+    <div class="page" id="page-startups">
+      <div class="section-header"><h3>All Startups</h3><div class="chips" id="sector-chips"></div></div>
+      <div class="startups-grid" id="all-startups"></div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="page-history">
+      <div class="section-header"><h3>Application History</h3></div>
+      <div class="kanban">
+        <div class="kanban-col"><h4>Applied <span class="count" id="kanban-applied-count">0</span></h4><div id="kanban-applied"><div class="empty-state"><p>No applications yet</p><small>Apply to startups to see them here</small></div></div></div>
+        <div class="kanban-col"><h4>Follow-up Due <span class="count" id="kanban-followup-count">0</span></h4><div id="kanban-followup"><div class="empty-state"><p>No follow-ups pending</p><small>Follow-ups appear after 4 days</small></div></div></div>
+        <div class="kanban-col"><h4>Response <span class="count" id="kanban-response-count">0</span></h4><div id="kanban-response"><div class="empty-state"><p>No responses yet</p><small>Responses appear here when received</small></div></div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="settings-section">
+        <h4>Profile Information</h4>
+        <div class="form-grid">
+          <div class="form-group"><label>Full Name</label><input type="text" id="set-name" placeholder="Your name"></div>
+          <div class="form-group"><label>Degree</label><input type="text" id="set-degree" placeholder="B.Tech Computer Science"></div>
+          <div class="form-group"><label>CGPA</label><input type="text" id="set-cgpa" placeholder="7.4"></div>
+          <div class="form-group"><label>Year</label><input type="text" id="set-year" placeholder="Final Year"></div>
+          <div class="form-group full"><label>Skills (comma separated)</label><input type="text" id="set-skills" placeholder="Python, Django, ML, SQL"></div>
+          <div class="form-group full"><label>Experience</label><input type="text" id="set-experience" placeholder="6 months internship at XYZ"></div>
+          <div class="form-group"><label>Location</label><input type="text" id="set-location" placeholder="Dehradun"></div>
+          <div class="form-group"><label>Target Role</label><input type="text" id="set-role" placeholder="Backend Developer"></div>
+          <div class="form-group"><label>GitHub URL</label><input type="text" id="set-github" placeholder="github.com/you"></div>
+          <div class="form-group"><label>LinkedIn URL</label><input type="text" id="set-linkedin" placeholder="linkedin.com/in/you"></div>
+          <div class="form-group"><label>Upload CV</label><input type="file" id="set-cv" accept=".pdf,.doc,.docx"><small id="cv-status" style="font-size:11px;color:var(--text-3)"></small></div>
+          <div class="form-group"><label>Notice Period</label><input type="text" id="set-notice" placeholder="Immediately Available"></div>
+          <div class="form-group"><label>Expected CTC</label><input type="text" id="set-ctc" placeholder="4-6 LPA"></div>
+          <div class="form-group full"><label>Certificates</label><input type="text" id="set-certs" placeholder="AWS, GCP, etc."></div>
+        </div>
+        <div style="margin-top:20px"><button class="btn btn-primary" onclick="saveProfile()">Save Profile</button></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══ APPLY MODAL ═══ -->
+<div class="modal-overlay" id="apply-modal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="modal-startup-name">Apply to Startup</h3><button class="modal-close" onclick="closeModal()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px;display:flex;gap:8px;align-items:center">
+        <span class="confidence-badge" id="modal-confidence"></span>
+        <span id="modal-meta" style="font-size:13px;color:var(--text-2)"></span>
+      </div>
+      <p id="modal-summary" style="font-size:13px;color:var(--text-2);margin-bottom:20px"></p>
+      <h4 style="font-size:13px;font-weight:600;color:var(--text-0);margin-bottom:8px">Generated Email</h4>
+      <div class="email-preview" id="modal-email-body">Loading email draft...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="copyEmail()">Copy</button>
+      <button class="btn btn-outline" onclick="openMailto()">Open in Gmail</button>
+      <button class="btn btn-primary" onclick="markApplied()">Mark as Applied</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOADING ═══ -->
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+
+<!-- ═══ TOASTS ═══ -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- ═══ FIREBASE SDK ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+// ── STATE ──
+let currentUser = null;
+let idToken = null;
+let allStartups = [];
+let currentApplyStartup = null;
+// authHandled: true once any auth path has begun processing so onAuthStateChanged
+// does not fire a second verify while a popup/redirect verify is in-flight.
+let authHandled = false;
+
+// ── FIREBASE INIT ──
+fetch('/api/firebase-config').then(r=>r.json()).then(async cfg=>{
+  if(cfg.apiKey){
+    firebase.initializeApp(cfg);
+    await initAuthFlow();
+  }else{
+    document.getElementById('login-screen').style.display='flex';
+    showLoginError('Firebase not configured — check server .env');
+  }
+}).catch(()=>{
+  document.getElementById('login-screen').style.display='flex';
+  showLoginError('Could not load Firebase config from server');
+});
+
+// ── AUTH ──
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+
+async function postVerifyToken(token){
+  const res = await fetch('/api/auth/verify',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({idToken:token})
+  });
+  const data = await res.json().catch(()=>({error:'Authentication server error'}));
+  return {res,data};
+}
+
+async function verifyFirebaseUser(user){
+  try{
+    // Force-refresh so the token is never stale (especially after redirect flows)
+    idToken = await user.getIdToken(true);
+    let {res,data} = await postVerifyToken(idToken);
+    if(res.status===401){
+      await wait(1500);
+      idToken = await user.getIdToken(true);
+      ({res,data} = await postVerifyToken(idToken));
+    }
+    if(!res.ok||data.error){
+      idToken=null;
+      currentUser=null;
+      authHandled=false; // allow retry
+      showLoginError(data.error||'Could not verify sign-in. Please try again.');
+      document.getElementById('login-screen').style.display='flex';
+      return false;
+    }
+    currentUser = data.user;
+    enterApp(data.profile);
+    return true;
+  }catch(err){
+    idToken=null;
+    currentUser=null;
+    authHandled=false;
+    showLoginError('Network error during sign-in. Please try again.');
+    document.getElementById('login-screen').style.display='flex';
+    return false;
+  }
+}
+
+function showLoginIfAuthPending(){
+  if(!authHandled)document.getElementById('login-screen').style.display='flex';
+}
+
+async function initAuthFlow(){
+  try{
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // Handle redirect-based sign-in result first (mobile/popup-blocked fallback)
+    const result = await firebase.auth().getRedirectResult();
+    if(result && result.user){
+      authHandled = true; // lock BEFORE async work so onAuthStateChanged skips
+      await verifyFirebaseUser(result.user);
+      return;
+    }
+
+    // Listen for existing session (page reload with cached credentials)
+    firebase.auth().onAuthStateChanged(async user=>{
+      if(authHandled)return; // already being handled by popup or redirect
+      authHandled = true;    // lock immediately so no second call can sneak in
+      if(user){
+        await verifyFirebaseUser(user);
+        return;
+      }
+      // No cached session — show login
+      document.getElementById('login-screen').style.display='flex';
+    });
+
+    // Safety net: if onAuthStateChanged never fires (e.g. Firebase SDK delay), show login
+    setTimeout(showLoginIfAuthPending, 1500);
+  }catch(e){
+    authHandled = true;
+    document.getElementById('login-screen').style.display='flex';
+    showLoginError(e.message||'Firebase initialisation error');
+  }
+}
+
+async function signInWithGoogle(){
+  if(!firebase.apps.length){showLoginError('Firebase not configured');return;}
+  // Lock authHandled BEFORE opening the popup so onAuthStateChanged cannot
+  // race with the popup resolve and call verifyFirebaseUser twice.
+  authHandled = true;
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  try{
+    const result=await firebase.auth().signInWithPopup(provider);
+    if(result && result.user){
+      const ok = await verifyFirebaseUser(result.user);
+      // verifyFirebaseUser resets authHandled=false on failure so user can retry
+      if(!ok) return;
+    }else{
+      // Popup completed but no user (shouldn't happen, but guard it)
+      authHandled=false;
+      showLoginError('Sign-in cancelled. Please try again.');
+      document.getElementById('login-screen').style.display='flex';
+    }
+  }catch(e){
+    authHandled=false; // allow retry
+    if(e&&['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)){
+      // Popup was blocked — fall back to redirect flow
+      authHandled=true;
+      try{
+        await firebase.auth().signInWithRedirect(provider);
+      }catch(redirectError){
+        authHandled=false;
+        showLoginError(redirectError.message||'Google sign-in failed');
+        document.getElementById('login-screen').style.display='flex';
+      }
+      return;
+    }
+    showLoginError(e.message||'Google sign-in failed. Please try again.');
+    document.getElementById('login-screen').style.display='flex';
+  }
+}
+
+function showLoginError(msg){
+  const el=document.getElementById('login-error');
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+async function signOut(){
+  if(firebase.apps.length)await firebase.auth().signOut();
+  currentUser=null;idToken=null;authHandled=false;
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function enterApp(profile){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').classList.add('active');
+  const name=profile?.name||currentUser?.name||'User';
+  const email=profile?.email||currentUser?.email||'';
+  const pic=profile?.picture||currentUser?.picture||'';
+  document.getElementById('sidebar-name').textContent=name;
+  document.getElementById('sidebar-email').textContent=email;
+  const av=document.getElementById('sidebar-avatar');
+  if(pic){av.innerHTML=`<img src="${pic}" alt="">`;}else{av.textContent=name.charAt(0).toUpperCase();}
+  // Fill settings
+  document.getElementById('set-name').value=profile?.name||'';
+  document.getElementById('set-degree').value=profile?.degree||'';
+  document.getElementById('set-cgpa').value=profile?.cgpa||'';
+  document.getElementById('set-year').value=profile?.year||'';
+  document.getElementById('set-skills').value=profile?.skills||'';
+  document.getElementById('set-experience').value=profile?.experience||'';
+  document.getElementById('set-location').value=profile?.location||'';
+  document.getElementById('set-role').value=profile?.role_target||'';
+  document.getElementById('set-github').value=profile?.github||'';
+  document.getElementById('set-linkedin').value=profile?.linkedin||'';
+  document.getElementById('cv-status').textContent=profile?.cv_filename?`Current: ${profile.cv_filename}`:'PDF, DOC, or DOCX';
+  document.getElementById('set-notice').value=profile?.notice_period||'';
+  document.getElementById('set-ctc').value=profile?.expected_ctc||'';
+  document.getElementById('set-certs').value=profile?.certificates||'';
+  loadDashboard();
+}
+
+// ── API HELPER ──
+async function getAuthToken(forceRefresh=false){
+  const user=firebase.apps.length?firebase.auth().currentUser:null;
+  if(!user)throw new Error('Unauthorized');
+  idToken=await user.getIdToken(forceRefresh);
+  return idToken;
+}
+
+async function api(path,options={}){
+  const headers={'Content-Type':'application/json'};
+  const token=await getAuthToken();
+  headers['Authorization']=`Bearer ${token}`;
+  let res=await fetch(path,{...options,headers});
+  if(res.status===401){
+    await wait(1500);
+    const freshToken=await getAuthToken(true);
+    headers['Authorization']=`Bearer ${freshToken}`;
+    res=await fetch(path,{...options,headers});
+  }
+  if(res.status===401)throw new Error('Unauthorized');
+  const data=await res.json().catch(()=>({error:'Invalid server response'}));
+  if(!res.ok)throw new Error(data.error||'Request failed');
+  return data;
+}
+
+// ── NAVIGATION ──
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('page-'+page);
+  if(el)el.classList.add('active');
+  const nav=document.querySelector(`.nav-item[data-page="${page}"]`);
+  if(nav)nav.classList.add('active');
+  const titles={dashboard:'Dashboard',startups:'All Startups',history:'Application History',settings:'Settings'};
+  document.getElementById('page-title').textContent=titles[page]||'Dashboard';
+  if(page==='startups')loadStartups();
+  if(page==='history')loadHistory();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+
+// ── LOAD DASHBOARD ──
+async function loadDashboard(){
+  try{
+    const data=await api('/api/startups');
+    allStartups=data.startups||[];
+    renderStats(allStartups);
+    renderTopStartups(allStartups.slice(0,4));
+    renderCharts(allStartups);
+  }catch(e){console.error(e);}
+}
+
+function renderStats(startups){
+  document.getElementById('stat-tracked').textContent=startups.length;
+  const high=startups.filter(s=>(s.score||0)>=75).length;
+  document.getElementById('stat-highmatch').textContent=high;
+  const scores=startups.map(s=>s.score||0);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):0;
+  document.getElementById('stat-avgscore').textContent=avg;
+  // Load applications count
+  api('/api/applications').then(d=>{
+    document.getElementById('stat-applied').textContent=(d.applications||[]).length;
+  }).catch(()=>{});
+}
+
+function renderTopStartups(startups){
+  const el=document.getElementById('top-startups');
+  if(!startups.length){el.innerHTML='<div class="empty-state"><p>No startups yet</p><small>Run the pipeline to discover funded startups</small></div>';return;}
+  el.innerHTML=startups.map(s=>startupCardHTML(s)).join('');
+}
+
+function renderAllStartups(startups){
+  const el=document.getElementById('all-startups');
+  if(!startups.length){el.innerHTML='<div class="empty-state"><p>No startups found</p><small>Try a different filter</small></div>';return;}
+  el.innerHTML=startups.map(s=>startupCardHTML(s)).join('');
+}
+
+function startupCardHTML(s){
+  const score=s.score||0;
+  const conf=s.confidence||'MEDIUM';
+  const confClass=conf==='HIGH'?'badge-high':conf==='LOW'?'badge-low':'badge-medium';
+  const pct=Math.min(score,100);
+  const circ=2*Math.PI*22;
+  const offset=circ-(pct/100)*circ;
+  const color=score>=75?'var(--green)':score>=50?'var(--amber)':'var(--red)';
+  const amtCr=((s.amount_inr||0)/10000000).toFixed(1);
+  return `<div class="startup-card">
+    <div class="card-top"><div class="card-info"><h4>${esc(s.name)}</h4><div class="meta">
+      <span class="meta-amount">₹${amtCr} Cr</span>
+      <span class="meta-round">${esc(s.round_type||'—')}</span>
+      <span class="meta-sector">${esc(s.sector||'—')}</span>
+    </div></div>
+    <div class="score-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"/><circle class="fg" cx="26" cy="26" r="22" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/></svg><div class="value">${score}</div></div>
+    </div>
+    <div class="confidence-badge ${confClass}"><span class="dot"></span>${conf} CONFIDENCE</div>
+    <div class="summary">${esc(s.summary_what||'')}</div>
+    <div class="role-match">Best Role: <strong>${esc(s.role_match||'See details')}</strong></div>
+    <div class="card-actions"><button class="btn btn-primary btn-sm" onclick="openApply(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(s))}')))">Apply Now</button><button class="btn btn-outline btn-sm" onclick="openSafeUrl('${encodeURIComponent(s.url||'')}')">Read More</button></div>
+  </div>`;
+}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function openSafeUrl(encodedUrl){
+  const url=decodeURIComponent(encodedUrl||'');
+  if(/^https?:\/\//i.test(url))window.open(url,'_blank','noopener,noreferrer');
+}
+
+// ── CHARTS ──
+let sectorChartInst=null,scoreChartInst=null;
+function renderCharts(startups){
+  // Sector
+  const sectors={};
+  startups.forEach(s=>{const sec=s.sector||'Other';sectors[sec]=(sectors[sec]||0)+1;});
+  const sLabels=Object.keys(sectors),sData=Object.values(sectors);
+  const sColors=['#F59E0B','#10B981','#8B5CF6','#3B82F6','#F97316','#EF4444','#EC4899','#06B6D4','#84CC16','#F43F5E'];
+  if(sectorChartInst)sectorChartInst.destroy();
+  sectorChartInst=new Chart(document.getElementById('sector-chart'),{type:'doughnut',data:{labels:sLabels,datasets:[{data:sData,backgroundColor:sColors.slice(0,sLabels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#A1A1AA',padding:12,font:{size:11}}}}}});
+  // Score
+  const buckets={'0-25':0,'26-50':0,'51-75':0,'76-100':0};
+  startups.forEach(s=>{const sc=s.score||0;if(sc<=25)buckets['0-25']++;else if(sc<=50)buckets['26-50']++;else if(sc<=75)buckets['51-75']++;else buckets['76-100']++;});
+  if(scoreChartInst)scoreChartInst.destroy();
+  scoreChartInst=new Chart(document.getElementById('score-chart'),{type:'bar',data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),backgroundColor:['#EF4444','#F97316','#F59E0B','#10B981'],borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#71717A'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#71717A'}}}}});
+}
+
+// ── LOAD STARTUPS PAGE ──
+async function loadStartups(){
+  try{
+    const data=await api('/api/startups');
+    allStartups=data.startups||[];
+    // Sector chips
+    const sectors=[...new Set(allStartups.map(s=>s.sector).filter(Boolean))];
+    const chipEl=document.getElementById('sector-chips');
+    chipEl.innerHTML=`<button class="chip active" onclick="filterSector('all',this)">All</button>`+sectors.map(s=>`<button class="chip" onclick="filterSector(decodeURIComponent('${encodeURIComponent(s)}'),this)">${esc(s)}</button>`).join('');
+    renderAllStartups(allStartups);
+  }catch(e){console.error(e);}
+}
+
+function filterSector(sector,el){
+  document.querySelectorAll('#sector-chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const filtered=sector==='all'?allStartups:allStartups.filter(s=>s.sector===sector);
+  renderAllStartups(filtered);
+}
+
+// ── APPLY FLOW ──
+async function openApply(startup){
+  currentApplyStartup=startup;
+  document.getElementById('modal-startup-name').textContent='Apply to '+startup.name;
+  const conf=startup.confidence||'MEDIUM';
+  const confClass=conf==='HIGH'?'badge-high':conf==='LOW'?'badge-low':'badge-medium';
+  document.getElementById('modal-confidence').className='confidence-badge '+confClass;
+  document.getElementById('modal-confidence').innerHTML=`<span class="dot"></span>${conf}`;
+  document.getElementById('modal-meta').textContent=`₹${((startup.amount_inr||0)/10000000).toFixed(1)} Cr · ${startup.round_type||''} · ${startup.sector||''}`;
+  document.getElementById('modal-summary').textContent=startup.summary_what||'';
+  document.getElementById('modal-email-body').textContent='Generating personalized email...';
+  document.getElementById('apply-modal').classList.add('active');
+  try{
+    const data=await api('/api/apply',{method:'POST',body:JSON.stringify({name:startup.name})});
+    if(data.ok){
+      document.getElementById('modal-email-body').textContent=`Subject: ${data.subject}\n\n${data.body}`;
+      if(data.ai)showToast('AI-generated email ready','success');
+      else showToast('Template email ready','info');
+    }else{
+      document.getElementById('modal-email-body').textContent='Could not generate email. Please try again.';
+    }
+  }catch(e){document.getElementById('modal-email-body').textContent='Error generating email.';}
+}
+
+function closeModal(){document.getElementById('apply-modal').classList.remove('active');currentApplyStartup=null;}
+function copyEmail(){const el=document.getElementById('modal-email-body');navigator.clipboard.writeText(el.textContent);showToast('Email copied to clipboard','success');}
+function openMailto(){
+  if(!currentApplyStartup)return;
+  const text=document.getElementById('modal-email-body').textContent;
+  const lines=text.split('\n');
+  const subject=lines[0].replace('Subject: ','');
+  const body=encodeURIComponent(lines.slice(1).join('\n').trim());
+  const to=encodeURIComponent(currentApplyStartup.name.toLowerCase().replace(/\s+/g,'')+'@startup.com');
+  window.open(`mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`);
+}
+async function markApplied(){
+  if(!currentApplyStartup)return;
+  try{
+    const text=document.getElementById('modal-email-body').textContent;
+    const subject=text.split('\n')[0].replace('Subject: ','')||'Application';
+    await api('/api/mark-applied',{method:'POST',body:JSON.stringify({name:currentApplyStartup.name,subject})});
+    showToast('Marked as applied!','success');
+    closeModal();
+    renderStats(allStartups);
+  }catch(e){showToast('Could not mark as applied','error');}
+}
+
+// ── HISTORY ──
+async function loadHistory(){
+  try{
+    const data=await api('/api/applications');
+    const apps=data.applications||[];
+    const applied=apps.filter(a=>a.status==='APPLIED');
+    const followup=apps.filter(a=>!a.followup_1_done);
+    document.getElementById('kanban-applied-count').textContent=applied.length;
+    document.getElementById('kanban-followup-count').textContent=followup.length;
+    document.getElementById('kanban-response-count').textContent='0';
+    document.getElementById('kanban-applied').innerHTML=applied.length?applied.map(a=>`<div class="kanban-card"><div class="kc-name">${esc(a.startup_name)}</div><div class="kc-date">${esc(a.applied_date||'')}</div></div>`).join(''):'<div class="empty-state"><p>No applications yet</p><small>Apply to startups to see them here</small></div>';
+    document.getElementById('kanban-followup').innerHTML=followup.length?followup.map(a=>`<div class="kanban-card"><div class="kc-name">${esc(a.startup_name)}</div><div class="kc-date">Applied: ${esc(a.applied_date||'')}</div></div>`).join(''):'<div class="empty-state"><p>No follow-ups pending</p><small>Follow-ups appear after 4 days</small></div>';
+  }catch(e){console.error(e);}
+}
+
+// ── SETTINGS ──
+async function saveProfile(){
+  const fields={name:'set-name',degree:'set-degree',cgpa:'set-cgpa',year:'set-year',skills:'set-skills',experience:'set-experience',location:'set-location',role_target:'set-role',github:'set-github',linkedin:'set-linkedin',notice_period:'set-notice',expected_ctc:'set-ctc',certificates:'set-certs'};
+  const data={};
+  for(const[key,id]of Object.entries(fields)){data[key]=document.getElementById(id).value.trim();}
+  try{
+    const cv=document.getElementById('set-cv').files[0];
+    if(cv){
+      const form=new FormData();
+      form.append('cv',cv);
+      const token=await getAuthToken(true);
+      const upload=await fetch('/api/profile/cv',{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:form});
+      const uploadData=await upload.json().catch(()=>({error:'Invalid upload response'}));
+      if(!upload.ok||uploadData.error)throw new Error(uploadData.error||'CV upload failed');
+      document.getElementById('cv-status').textContent=`Current: ${uploadData.cv_filename}`;
+      document.getElementById('set-cv').value='';
+    }
+    await api('/api/profile',{method:'PUT',body:JSON.stringify(data)});
+    showToast('Profile saved successfully','success');
+    document.getElementById('sidebar-name').textContent=data.name||currentUser?.name||'User';
+  }catch(e){showToast('Could not save profile','error');}
+}
+
+// ── PIPELINE ──
+async function runPipeline(){
+  showLoading(true);
+  try{
+    const data=await api('/api/run',{method:'POST'});
+    if(data.ok){showToast('Pipeline started!','info');pollStatus();}
+    else showToast(data.message||'Pipeline already running','info');
+  }catch(e){showToast('Could not start pipeline','error');showLoading(false);}
+}
+function pollStatus(){
+  const iv=setInterval(async()=>{
+    try{
+      const data=await api('/api/status');
+      if(!data.running){clearInterval(iv);showLoading(false);loadDashboard();showToast(data.message||'Pipeline complete','success');}
+    }catch(e){clearInterval(iv);showLoading(false);}
+  },3000);
+}
+
+// ── UTILS ──
+function showLoading(on){document.getElementById('loading').classList.toggle('active',on);}
+function showToast(msg,type='info'){
+  const el=document.createElement('div');el.className='toast '+type;el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+
+</script>
+</body>
+</html>
